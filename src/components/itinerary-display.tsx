@@ -1,15 +1,51 @@
-import type { Itinerary } from "@/lib/types";
+import type { Itinerary, TransportSuggestion } from "@/lib/types";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { HotelCard } from "./hotel-card";
 import { ActivityCard } from "./activity-card";
-import { Card } from "./ui/card";
-import Image from "next/image";
+import { TransportCard } from "./transport-card";
+import { Button } from "./ui/button";
+import Link from "next/link";
+import { Plane, Train, Bus, ExternalLink } from "lucide-react";
 
 interface ItineraryDisplayProps {
   itinerary: Itinerary;
   onRegenerate: (dayIndex: number, activityIndex: number) => Promise<void>;
   regeneratingIndex: { day: number; activity: number } | null;
   destination: string;
+}
+
+const transportIcons: Record<string, React.ElementType> = {
+  Flight: Plane,
+  Train: Train,
+  Bus: Bus,
+};
+
+function TransportSuggestions({ suggestions }: { suggestions: TransportSuggestion[] }) {
+  if (!suggestions || suggestions.length === 0) {
+    return <p className="text-muted-foreground p-4">No transport suggestions available.</p>;
+  }
+
+  return (
+    <div className="space-y-4 p-4">
+      {suggestions.map((suggestion, index) => {
+        const Icon = transportIcons[suggestion.type] || Plane;
+        return (
+          <div key={index} className="p-4 rounded-lg border bg-card/50 flex items-start gap-4">
+            <Icon className="h-6 w-6 text-primary mt-1" />
+            <div className="flex-grow">
+              <h4 className="font-semibold">{suggestion.type}</h4>
+              <p className="text-muted-foreground text-sm mb-2">{suggestion.description}</p>
+              <Button asChild variant="link" className="p-0 h-auto">
+                <Link href={suggestion.bookingLink} target="_blank" rel="noopener noreferrer">
+                  Booking Link <ExternalLink className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export function ItineraryDisplay({ itinerary, onRegenerate, regeneratingIndex, destination }: ItineraryDisplayProps) {
@@ -20,23 +56,37 @@ export function ItineraryDisplay({ itinerary, onRegenerate, regeneratingIndex, d
 
   return (
     <div className="space-y-12 animate-fade-in">
-      <section>
-        <h2 className="text-3xl font-bold tracking-tight mb-6">Hotel Suggestions</h2>
-        {Object.keys(hotelsByDestination).length > 0 ? (
-          Object.entries(hotelsByDestination).map(([dest, hotels]) => (
-            <div key={dest} className="mb-8">
-              <h3 className="text-2xl font-semibold tracking-tight mb-4 text-primary">{dest}</h3>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {hotels.map((hotel, index) => (
-                  <HotelCard key={index} hotel={hotel} />
-                ))}
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-muted-foreground">No hotel suggestions available.</p>
-        )}
-      </section>
+      <Accordion type="multiple" className="w-full space-y-4" defaultValue={['hotels', 'transport']}>
+        <AccordionItem value="hotels" className="bg-card border-none rounded-lg overflow-hidden shadow-sm">
+          <AccordionTrigger className="p-6 text-2xl font-bold tracking-tight hover:no-underline">
+            Hotel Suggestions
+          </AccordionTrigger>
+          <AccordionContent className="p-6 pt-0">
+            {Object.keys(hotelsByDestination).length > 0 ? (
+              Object.entries(hotelsByDestination).map(([dest, hotels]) => (
+                <div key={dest} className="mb-8 last:mb-0">
+                  <h3 className="text-xl font-semibold tracking-tight mb-4 text-primary">{dest}</h3>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {hotels.map((hotel, index) => (
+                      <HotelCard key={index} hotel={hotel} />
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-muted-foreground">No hotel suggestions available.</p>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="transport" className="bg-card border-none rounded-lg overflow-hidden shadow-sm">
+          <AccordionTrigger className="p-6 text-2xl font-bold tracking-tight hover:no-underline">
+            Transportation Suggestions
+          </AccordionTrigger>
+          <AccordionContent>
+            <TransportSuggestions suggestions={itinerary.transportSuggestions} />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <section>
         <h2 className="text-3xl font-bold tracking-tight mb-6">Your Itinerary for {destination}</h2>
@@ -52,15 +102,23 @@ export function ItineraryDisplay({ itinerary, onRegenerate, regeneratingIndex, d
                 <AccordionContent className="p-6 pt-0">
                   <div className="space-y-6">
                     {day.activities.map((activity, activityIndex) => (
-                      <ActivityCard
-                        key={activityIndex}
-                        activity={activity}
-                        isRegenerating={
-                          regeneratingIndex?.day === dayIndex &&
-                          regeneratingIndex?.activity === activityIndex
-                        }
-                        onRegenerate={() => onRegenerate(dayIndex, activityIndex)}
-                      />
+                      <div key={activityIndex}>
+                        <ActivityCard
+                          activity={activity}
+                          destination={day.destination}
+                          isRegenerating={
+                            regeneratingIndex?.day === dayIndex &&
+                            regeneratingIndex?.activity === activityIndex
+                          }
+                          onRegenerate={() => onRegenerate(dayIndex, activityIndex)}
+                        />
+                        {activity.transportToNextActivity && activityIndex < day.activities.length - 1 && (
+                          <TransportCard
+                            description={activity.transportToNextActivity.description}
+                            link={activity.transportToNextActivity.googleMapsLink}
+                          />
+                        )}
+                      </div>
                     ))}
                   </div>
                 </AccordionContent>

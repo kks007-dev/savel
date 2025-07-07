@@ -50,12 +50,25 @@ const TravelItineraryOutputSchema = z.object({
               metroStations: z.string().optional().describe('Nearest metro stations.'),
               cost: z.string().describe('Cost indicator (e.g., $, $$, $$$).'),
               link: z.string().optional().describe('Link for more information or booking.'),
+              transportToNextActivity: z.object({
+                  description: z.string().describe('Description of the transport to the next activity.'),
+                  googleMapsLink: z.string().describe('Google Maps link for the route.'),
+                }).optional().describe('Transportation to the next activity. Omit for the last activity of the day.'),
             })
           )
           .describe('List of activities for the day.'),
       })
     )
     .describe('Detailed daily itineraries.'),
+  transportSuggestions: z
+    .array(
+      z.object({
+        type: z.string().describe('Type of transport (e.g., Flight, Train, Bus).'),
+        description: z.string().describe('Description of the transport option.'),
+        bookingLink: z.string().describe('Link to book the transport.'),
+      })
+    )
+    .describe('List of overall transportation suggestions between destinations.'),
 });
 export type TravelItineraryOutput = z.infer<typeof TravelItineraryOutputSchema>;
 
@@ -82,6 +95,8 @@ Interests: {{{interests}}}
 
 Provide 3 hotel suggestions for each destination with cost, booking links, and the destination city.
 Create a daily itinerary with activity suggestions, metro routes, cost estimates, and external links for each day of the entire trip.
+For each day, provide transportation suggestions between activities, including a description and a Google Maps link. Do not add transportation for the last activity of a day.
+Provide a list of overall transportation suggestions for travel between the main destinations (e.g., flights from Paris to Rome).
 Organize the itinerary in a card format for each day.
 Include cost indicators ($, $$, $$$) for activities and hotels.
 `,
