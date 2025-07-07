@@ -14,7 +14,7 @@ import {z} from 'genkit';
 
 const TravelItineraryInputSchema = z.object({
   destination: z.string().describe('The desired travel destination.'),
-  budget: z.string().describe('The budget for the entire trip (e.g., \'\$5000\', \'luxury\').'),
+  budget: z.string().describe('The budget for the entire trip (e.g., \'$5000\', \'luxury\').'),
   durationDays: z.number().describe('The number of days for the trip.'),
   interests: z.string().optional().describe('Interests (e.g., history, food, art).'),
 });
@@ -25,7 +25,7 @@ const TravelItineraryOutputSchema = z.object({
     z.object({
       name: z.string().describe('Name of the hotel.'),
       cost: z.string().describe('Cost indicator (e.g., $, $$, $$$).'),
-      bookingLink: z.string().url().describe('Link to book the hotel.'),
+      bookingLink: z.string().describe('Link to book the hotel.'),
     })
   ).describe('List of suggested hotels.'),
   dailyItineraries: z.array(
@@ -36,7 +36,7 @@ const TravelItineraryOutputSchema = z.object({
           description: z.string().describe('Description of the activity.'),
           metroStations: z.string().optional().describe('Nearest metro stations.'),
           cost: z.string().describe('Cost indicator (e.g., $, $$, $$$).'),
-          link: z.string().url().optional().describe('Link for more information or booking.'),
+          link: z.string().optional().describe('Link for more information or booking.'),
         })
       ).describe('List of activities for the day.'),
     })
