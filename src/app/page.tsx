@@ -13,7 +13,7 @@ import { ItineraryDisplay } from '@/components/itinerary-display';
 
 export default function Home() {
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
-  const [currentDestination, setCurrentDestination] = useState('');
+  const [currentDestinations, setCurrentDestinations] = useState('');
   const [formInput, setFormInput] = useState<ItineraryInput | null>(null);
   const [isGenerating, startGeneration] = useTransition();
   const [regeneratingIndex, setRegeneratingIndex] = useState<{ day: number; activity: number } | null>(null);
@@ -21,7 +21,8 @@ export default function Home() {
 
   const handleFormSubmit = (data: ItineraryInput) => {
     setItinerary(null);
-    setCurrentDestination(data.destination);
+    const destinationNames = data.destinations.map(d => d.name).join(', ');
+    setCurrentDestinations(destinationNames);
     setFormInput(data);
 
     startGeneration(async () => {
@@ -45,10 +46,11 @@ export default function Home() {
     setRegeneratingIndex({ day: dayIndex, activity: activityIndex });
     
     const activityToReplace = itinerary.dailyItineraries[dayIndex].activities[activityIndex];
+    const destinationForActivity = itinerary.dailyItineraries[dayIndex].destination;
 
     try {
       const result = await regenerateActivity({
-        location: currentDestination,
+        location: destinationForActivity,
         activity: activityToReplace.description,
         originalItinerary: JSON.stringify(itinerary),
         budget: formInput.budget,
@@ -85,7 +87,7 @@ export default function Home() {
                 itinerary={itinerary}
                 onRegenerate={handleRegenerateActivity}
                 regeneratingIndex={regeneratingIndex}
-                destination={currentDestination}
+                destination={currentDestinations}
               />
             ) : (
               <InitialView />

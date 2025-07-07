@@ -13,34 +13,49 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const TravelItineraryInputSchema = z.object({
-  destination: z.string().describe('The desired travel destination.'),
-  budget: z.string().describe('The budget for the entire trip (e.g., \'$5000\', \'luxury\').'),
-  durationDays: z.number().describe('The number of days for the trip.'),
+  destinations: z
+    .array(
+      z.object({
+        name: z.string().describe('The name of the travel destination.'),
+        durationDays: z.number().describe('The number of days to spend at this destination.'),
+      })
+    )
+    .min(1)
+    .describe('A list of destinations for the trip.'),
+  budget: z.string().describe("The budget for the entire trip (e.g., '$5000', 'luxury')."),
   interests: z.string().optional().describe('Interests (e.g., history, food, art).'),
 });
 export type TravelItineraryInput = z.infer<typeof TravelItineraryInputSchema>;
 
 const TravelItineraryOutputSchema = z.object({
-  hotelSuggestions: z.array(
-    z.object({
-      name: z.string().describe('Name of the hotel.'),
-      cost: z.string().describe('Cost indicator (e.g., $, $$, $$$).'),
-      bookingLink: z.string().describe('Link to book the hotel.'),
-    })
-  ).describe('List of suggested hotels.'),
-  dailyItineraries: z.array(
-    z.object({
-      day: z.number().describe('Day number in the itinerary.'),
-      activities: z.array(
-        z.object({
-          description: z.string().describe('Description of the activity.'),
-          metroStations: z.string().optional().describe('Nearest metro stations.'),
-          cost: z.string().describe('Cost indicator (e.g., $, $$, $$$).'),
-          link: z.string().optional().describe('Link for more information or booking.'),
-        })
-      ).describe('List of activities for the day.'),
-    })
-  ).describe('Detailed daily itineraries.'),
+  hotelSuggestions: z
+    .array(
+      z.object({
+        name: z.string().describe('Name of the hotel.'),
+        destination: z.string().describe('The destination city this hotel is in.'),
+        cost: z.string().describe('Cost indicator (e.g., $, $$, $$$).'),
+        bookingLink: z.string().describe('Link to book the hotel.'),
+      })
+    )
+    .describe('List of suggested hotels, grouped by destination.'),
+  dailyItineraries: z
+    .array(
+      z.object({
+        day: z.number().describe('Day number in the itinerary.'),
+        destination: z.string().describe('The destination city for this day of the itinerary.'),
+        activities: z
+          .array(
+            z.object({
+              description: z.string().describe('Description of the activity.'),
+              metroStations: z.string().optional().describe('Nearest metro stations.'),
+              cost: z.string().describe('Cost indicator (e.g., $, $$, $$$).'),
+              link: z.string().optional().describe('Link for more information or booking.'),
+            })
+          )
+          .describe('List of activities for the day.'),
+      })
+    )
+    .describe('Detailed daily itineraries.'),
 });
 export type TravelItineraryOutput = z.infer<typeof TravelItineraryOutputSchema>;
 
@@ -52,18 +67,24 @@ const prompt = ai.definePrompt({
   name: 'generateTravelItineraryPrompt',
   input: {schema: TravelItineraryInputSchema},
   output: {schema: TravelItineraryOutputSchema},
-  prompt: `You are an expert travel planner. Generate a detailed travel itinerary based on the user's preferences.
+  prompt: `You are an expert travel planner. Generate a detailed travel itinerary for a multi-destination trip based on the user's preferences.
 
-Destination: {{{destination}}}
+The user will be visiting the following destinations:
+{{#each destinations}}
+- {{name}} for {{durationDays}} days
+{{/each}}
+
+Total trip duration is the sum of all days. Please number the days in the daily itinerary sequentially across the entire trip.
+For each day in the itinerary, you must specify the destination city.
+
 Budget: {{{budget}}}
-Duration: {{{durationDays}}} days
 Interests: {{{interests}}}
 
-Provide 3 hotel suggestions with cost and booking links.
-Create a daily itinerary with activity suggestions, metro routes, cost estimates, and external links.
+Provide 3 hotel suggestions for each destination with cost, booking links, and the destination city.
+Create a daily itinerary with activity suggestions, metro routes, cost estimates, and external links for each day of the entire trip.
 Organize the itinerary in a card format for each day.
 Include cost indicators ($, $$, $$$) for activities and hotels.
-`, 
+`,
 });
 
 const generateTravelItineraryFlow = ai.defineFlow(

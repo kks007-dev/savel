@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -14,13 +14,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, CalendarDays, DollarSign, Heart, Sparkles, Loader2 } from "lucide-react";
+import { MapPin, CalendarDays, DollarSign, Heart, Sparkles, Loader2, PlusCircle, Trash2 } from "lucide-react";
 import type { ItineraryInput } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+const DestinationSchema = z.object({
+  name: z.string().min(2, { message: "Destination must be at least 2 characters." }),
+  durationDays: z.coerce.number().min(1, { message: "Duration must be at least 1 day." }),
+});
 
 const TravelItineraryInputSchema = z.object({
-  destination: z.string().min(2, { message: "Destination must be at least 2 characters." }),
+  destinations: z.array(DestinationSchema).min(1, "Please add at least one destination."),
   budget: z.string().min(2, { message: "Please provide a budget (e.g., '$1000', 'moderate')." }),
-  durationDays: z.coerce.number().min(1, { message: "Duration must be at least 1 day." }),
   interests: z.string().optional(),
 });
 
@@ -33,11 +38,15 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
   const form = useForm<ItineraryInput>({
     resolver: zodResolver(TravelItineraryInputSchema),
     defaultValues: {
-      destination: "",
+      destinations: [{ name: "Paris, France", durationDays: 4 }, { name: "Rome, Italy", durationDays: 3 }],
       budget: "Moderate",
-      durationDays: 7,
-      interests: "sightseeing, local food",
+      interests: "sightseeing, local food, history",
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "destinations",
   });
 
   return (
@@ -51,41 +60,71 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="destination"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Destination</FormLabel>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                      <FormControl>
-                        <Input placeholder="e.g., Paris, France" {...field} className="pl-10" />
-                      </FormControl>
+            <div className="space-y-4">
+              <FormLabel>Destinations</FormLabel>
+                {fields.map((field, index) => (
+                  <div key={field.id} className="flex items-start gap-2 sm:gap-4 p-3 border rounded-lg bg-background/50">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-grow">
+                      <FormField
+                        control={form.control}
+                        name={`destinations.${index}.name`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className={cn(index !== 0 && "sr-only")}>Destination</FormLabel>
+                            <div className="relative">
+                              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <FormControl>
+                                <Input placeholder="e.g., Paris, France" {...field} className="pl-10" />
+                              </FormControl>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`destinations.${index}.durationDays`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className={cn(index !== 0 && "sr-only")}>Duration (days)</FormLabel>
+                            <div className="relative">
+                              <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <FormControl>
+                                <Input type="number" placeholder="e.g., 7" {...field} className="pl-10" />
+                              </FormControl>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="durationDays"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Duration (in days)</FormLabel>
-                    <div className="relative">
-                      <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                      <FormControl>
-                        <Input type="number" placeholder="e.g., 7" {...field} className="pl-10" />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="mt-1 sm:mt-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => remove(index)}
+                      disabled={fields.length <= 1}
+                      aria-label="Remove destination"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
+                  </div>
+                ))}
+              {form.formState.errors.destinations?.root && <FormMessage>{form.formState.errors.destinations.root.message}</FormMessage>}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => append({ name: "", durationDays: 3 })}
+              >
+                <PlusCircle className="h-4 w-4" />
+                Add Destination
+              </Button>
             </div>
-            <div className="grid md:grid-cols-2 gap-6">
+
+            <div className="grid md:grid-cols-2 gap-6 pt-4">
               <FormField
                 control={form.control}
                 name="budget"
@@ -95,7 +134,7 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <FormControl>
-                        <Input placeholder="e.g., $2000, Luxury, Budget-friendly" {...field} className="pl-10" />
+                        <Input placeholder="e.g., $2000, Luxury" {...field} className="pl-10" />
                       </FormControl>
                     </div>
                     <FormMessage />
