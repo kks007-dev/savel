@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'Teggie: Trip Planner',
+  title: 'Savel: Trip Planner',
   description: 'Your AI-powered travel itinerary builder.',
 };
 

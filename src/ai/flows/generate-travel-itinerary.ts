@@ -22,6 +22,7 @@ const TravelItineraryInputSchema = z.object({
     )
     .min(1)
     .describe('A list of destinations for the trip.'),
+  numberOfTravelers: z.number().describe('The number of people traveling.'),
   budget: z.string().describe("The budget for the entire trip (e.g., '$5000', 'luxury')."),
   interests: z.string().optional().describe('Interests (e.g., history, food, art).'),
 });
@@ -68,7 +69,14 @@ const TravelItineraryOutputSchema = z.object({
         bookingLink: z.string().describe('Link to book the transport.'),
       })
     )
-    .describe('List of overall transportation suggestions between destinations.'),
+    .describe('List of overall transportation suggestions for travel between the main destinations (e.g., flights from Paris to Rome).'),
+  costEffectiveTransportSuggestions: z.array(
+    z.object({
+      destination: z.string().describe('The destination city this suggestion is for.'),
+      suggestion: z.string().describe('A detailed suggestion for the most cost-effective way to use public transport in this city, considering the itinerary.'),
+      airportTransport: z.string().describe('Suggestions for getting from the airport to the city center.'),
+    })
+  ).describe('A list of cost-effective public transport strategies for each destination, including airport transport.'),
 });
 export type TravelItineraryOutput = z.infer<typeof TravelItineraryOutputSchema>;
 
@@ -80,25 +88,29 @@ const prompt = ai.definePrompt({
   name: 'generateTravelItineraryPrompt',
   input: {schema: TravelItineraryInputSchema},
   output: {schema: TravelItineraryOutputSchema},
-  prompt: `You are an expert travel planner. Generate a detailed travel itinerary for a multi-destination trip based on the user's preferences.
+  prompt: `You are an expert travel planner named Savel, specializing in cost-effective travel. Generate a detailed travel itinerary for a multi-destination trip based on the user's preferences.
 
 The user will be visiting the following destinations:
 {{#each destinations}}
 - {{name}} for {{durationDays}} days
 {{/each}}
 
+Number of travelers: {{{numberOfTravelers}}}
 Total trip duration is the sum of all days. Please number the days in the daily itinerary sequentially across the entire trip.
 For each day in the itinerary, you must specify the destination city.
 
 Budget: {{{budget}}}
 Interests: {{{interests}}}
 
-Provide 3 hotel suggestions for each destination with cost, booking links, and the destination city.
-Create a daily itinerary with activity suggestions, metro routes, cost estimates, and external links for each day of the entire trip.
-For each day, provide transportation suggestions between activities, including a description and a Google Maps link. Do not add transportation for the last activity of a day.
-Provide a list of overall transportation suggestions for travel between the main destinations (e.g., flights from Paris to Rome).
-Organize the itinerary in a card format for each day.
-Include cost indicators ($, $$, $$$) for activities and hotels.
+Your tasks are:
+1.  **Hotel Suggestions**: Provide 3 hotel suggestions for each destination with cost indicators ($, $$, $$$), booking links, and the destination city.
+2.  **Daily Itinerary**: Create a detailed daily itinerary with activity suggestions, nearest metro stations, cost estimates, and external links for each day of the entire trip. For each day, provide transportation suggestions *between* activities, including a description and a Google Maps link. Do not add transportation for the last activity of a day.
+3.  **Inter-Destination Transport**: Provide a list of overall transportation suggestions for travel *between* the main destinations (e.g., flights from Paris to Rome).
+4.  **Cost-Effective Public Transport Analysis**: This is the most important part. For each destination city, provide a detailed analysis of the most cost-effective public transportation strategy.
+    -   Based on the planned daily activities, determine if it's cheaper to buy single tickets or a multi-day pass (e.g., 24h, 48h, 72h pass).
+    -   Provide a clear recommendation. For example: "For your 3 days in Venice, purchasing a 72-hour Vaporetto pass for €40 is more cost-effective than buying individual tickets at €7.50 each, given your planned travel between islands."
+    -   Consider the number of travelers for any group discounts.
+    -   Include a separate suggestion for getting from the arrival airport to the city center.
 `,
 });
 

@@ -1,11 +1,11 @@
-import type { Itinerary, TransportSuggestion } from "@/lib/types";
+import type { Itinerary, TransportSuggestion, CostEffectiveTransportSuggestion } from "@/lib/types";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { HotelCard } from "./hotel-card";
 import { ActivityCard } from "./activity-card";
 import { TransportCard } from "./transport-card";
 import { Button } from "./ui/button";
 import Link from "next/link";
-import { Plane, Train, Bus, ExternalLink } from "lucide-react";
+import { Plane, Train, Bus, ExternalLink, Ticket, TramFront } from "lucide-react";
 
 interface ItineraryDisplayProps {
   itinerary: Itinerary;
@@ -48,6 +48,42 @@ function TransportSuggestions({ suggestions }: { suggestions: TransportSuggestio
   );
 }
 
+function CostEffectiveTransport({ suggestions }: { suggestions: CostEffectiveTransportSuggestion[] }) {
+  if (!suggestions || suggestions.length === 0) {
+    return <p className="text-muted-foreground p-4">No cost-effective transport suggestions available.</p>;
+  }
+
+  return (
+    <div className="space-y-6 p-4">
+      {suggestions.map((suggestion, index) => (
+        <div key={index} className="p-4 rounded-lg border bg-card/50 flex items-start gap-4">
+          <Ticket className="h-6 w-6 text-accent mt-1 flex-shrink-0" />
+          <div className="flex-grow">
+            <h3 className="text-lg font-semibold text-accent mb-2">{suggestion.destination}</h3>
+            <div className="space-y-3">
+              <div>
+                <h4 className="font-semibold flex items-center gap-2 mb-1">
+                  <TramFront className="h-5 w-5"/>
+                  City Transport Strategy
+                </h4>
+                <p className="text-muted-foreground text-sm">{suggestion.suggestion}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold flex items-center gap-2 mb-1">
+                  <Plane className="h-5 w-5"/>
+                  Airport Transport
+                </h4>
+                <p className="text-muted-foreground text-sm">{suggestion.airportTransport}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
 export function ItineraryDisplay({ itinerary, onRegenerate, regeneratingIndex, destination }: ItineraryDisplayProps) {
   const hotelsByDestination = itinerary.hotelSuggestions.reduce((acc, hotel) => {
     (acc[hotel.destination] = acc[hotel.destination] || []).push(hotel);
@@ -56,7 +92,7 @@ export function ItineraryDisplay({ itinerary, onRegenerate, regeneratingIndex, d
 
   return (
     <div className="space-y-12 animate-fade-in">
-      <Accordion type="multiple" className="w-full space-y-4" defaultValue={['hotels', 'transport']}>
+      <Accordion type="multiple" className="w-full space-y-4" defaultValue={['hotels', 'transport', 'cost-effective']}>
         <AccordionItem value="hotels" className="bg-card border-none rounded-lg overflow-hidden shadow-sm">
           <AccordionTrigger className="p-6 text-2xl font-bold tracking-tight hover:no-underline">
             Hotel Suggestions
@@ -84,6 +120,14 @@ export function ItineraryDisplay({ itinerary, onRegenerate, regeneratingIndex, d
           </AccordionTrigger>
           <AccordionContent>
             <TransportSuggestions suggestions={itinerary.transportSuggestions} />
+          </AccordionContent>
+        </AccordionItem>
+         <AccordionItem value="cost-effective" className="bg-card border-none rounded-lg overflow-hidden shadow-sm">
+          <AccordionTrigger className="p-6 text-2xl font-bold tracking-tight hover:no-underline">
+            Cost-Effective Transport Plan
+          </AccordionTrigger>
+          <AccordionContent>
+            <CostEffectiveTransport suggestions={itinerary.costEffectiveTransportSuggestions} />
           </AccordionContent>
         </AccordionItem>
       </Accordion>

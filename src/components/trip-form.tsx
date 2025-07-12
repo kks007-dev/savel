@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, CalendarDays, DollarSign, Heart, Sparkles, Loader2, PlusCircle, Trash2 } from "lucide-react";
+import { MapPin, CalendarDays, DollarSign, Heart, Sparkles, Loader2, PlusCircle, Trash2, Users } from "lucide-react";
 import type { ItineraryInput } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +25,7 @@ const DestinationSchema = z.object({
 
 const TravelItineraryInputSchema = z.object({
   destinations: z.array(DestinationSchema).min(1, "Please add at least one destination."),
+  numberOfTravelers: z.coerce.number().min(1, { message: "Must be at least 1 traveler." }),
   budget: z.string().min(2, { message: "Please provide a budget (e.g., '$1000', 'moderate')." }),
   interests: z.string().optional(),
 });
@@ -39,6 +40,7 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
     resolver: zodResolver(TravelItineraryInputSchema),
     defaultValues: {
       destinations: [{ name: "Paris, France", durationDays: 4 }, { name: "Rome, Italy", durationDays: 3 }],
+      numberOfTravelers: 2,
       budget: "Moderate",
       interests: "sightseeing, local food, history",
     },
@@ -124,7 +126,23 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
               </Button>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6 pt-4">
+            <div className="grid md:grid-cols-3 gap-6 pt-4">
+               <FormField
+                control={form.control}
+                name="numberOfTravelers"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Number of Travelers</FormLabel>
+                    <div className="relative">
+                      <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 2" {...field} className="pl-10" />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="budget"

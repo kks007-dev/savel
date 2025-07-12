@@ -7,7 +7,7 @@ export function AppHeader() {
         <div className="flex items-center gap-3 mb-2">
           <Plane className="size-10 text-primary" />
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-primary">
-            Teggie
+            Savel
           </h1>
         </div>
         <p className="text-lg text-muted-foreground">
