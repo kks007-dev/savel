@@ -14,13 +14,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, CalendarDays, DollarSign, Heart, Sparkles, Loader2, PlusCircle, Trash2, Users } from "lucide-react";
+import { MapPin, CalendarDays, DollarSign, Heart, Sparkles, Loader2, PlusCircle, Trash2, Users, Clock } from "lucide-react";
 import type { ItineraryInput } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const DestinationSchema = z.object({
   name: z.string().min(2, { message: "Destination must be at least 2 characters." }),
   durationDays: z.coerce.number().min(1, { message: "Duration must be at least 1 day." }),
+  arrivalTime: z.string().optional(),
+  departureTime: z.string().optional(),
 });
 
 const TravelItineraryInputSchema = z.object({
@@ -39,7 +41,7 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
   const form = useForm<ItineraryInput>({
     resolver: zodResolver(TravelItineraryInputSchema),
     defaultValues: {
-      destinations: [{ name: "Paris, France", durationDays: 4 }, { name: "Rome, Italy", durationDays: 3 }],
+      destinations: [{ name: "Paris, France", durationDays: 4, arrivalTime: "11:00", departureTime: "" }, { name: "Rome, Italy", durationDays: 3, arrivalTime: "", departureTime: "18:00" }],
       numberOfTravelers: 2,
       budget: "Moderate",
       interests: "sightseeing, local food, history",
@@ -65,14 +67,14 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
             <div className="space-y-4">
               <FormLabel>Destinations</FormLabel>
                 {fields.map((field, index) => (
-                  <div key={field.id} className="flex items-start gap-2 sm:gap-4 p-3 border rounded-lg bg-background/50">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-grow">
+                  <div key={field.id} className="flex flex-col sm:flex-row items-start gap-2 sm:gap-4 p-3 border rounded-lg bg-background/50">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-grow">
                       <FormField
                         control={form.control}
                         name={`destinations.${index}.name`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className={cn(index !== 0 && "sr-only")}>Destination</FormLabel>
+                            <FormLabel className="sm:hidden">Destination</FormLabel>
                             <div className="relative">
                               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                               <FormControl>
@@ -83,16 +85,48 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
                           </FormItem>
                         )}
                       />
-                      <FormField
+                       <FormField
                         control={form.control}
                         name={`destinations.${index}.durationDays`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className={cn(index !== 0 && "sr-only")}>Duration (days)</FormLabel>
+                            <FormLabel className="sm:hidden">Duration (days)</FormLabel>
                             <div className="relative">
                               <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                               <FormControl>
                                 <Input type="number" placeholder="e.g., 7" {...field} className="pl-10" />
+                              </FormControl>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`destinations.${index}.arrivalTime`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="sm:hidden">Arrival Time (Optional)</FormLabel>
+                            <div className="relative">
+                              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <FormControl>
+                                <Input type="time" {...field} className="pl-10" />
+                              </FormControl>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`destinations.${index}.departureTime`}
+                        render={({ field }) => (
+                          <FormItem>
+                             <FormLabel className="sm:hidden">Departure Time (Optional)</FormLabel>
+                            <div className="relative">
+                              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <FormControl>
+                                <Input type="time" {...field} className="pl-10" />
                               </FormControl>
                             </div>
                             <FormMessage />
@@ -104,7 +138,7 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="mt-1 sm:mt-7 text-muted-foreground hover:text-destructive"
+                      className="mt-1 sm:mt-0 self-center text-muted-foreground hover:text-destructive"
                       onClick={() => remove(index)}
                       disabled={fields.length <= 1}
                       aria-label="Remove destination"
@@ -119,7 +153,7 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
                 variant="outline"
                 size="sm"
                 className="gap-2"
-                onClick={() => append({ name: "", durationDays: 3 })}
+                onClick={() => append({ name: "", durationDays: 3, arrivalTime: "", departureTime: "" })}
               >
                 <PlusCircle className="h-4 w-4" />
                 Add Destination

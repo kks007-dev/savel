@@ -18,6 +18,8 @@ const TravelItineraryInputSchema = z.object({
       z.object({
         name: z.string().describe('The name of the travel destination.'),
         durationDays: z.number().describe('The number of days to spend at this destination.'),
+        arrivalTime: z.string().optional().describe('The estimated arrival time at this destination. e.g., "10:00 AM" or "afternoon"'),
+        departureTime: z.string().optional().describe('The estimated departure time from this destination. e.g., "6:00 PM" or "evening"'),
       })
     )
     .min(1)
@@ -92,12 +94,13 @@ const prompt = ai.definePrompt({
 
 The user will be visiting the following destinations:
 {{#each destinations}}
-- {{name}} for {{durationDays}} days
+- {{name}} for {{durationDays}} days. {{#if arrivalTime}}Arrival time: {{arrivalTime}}.{{/if}} {{#if departureTime}}Departure time: {{departureTime}}.{{/if}}
 {{/each}}
 
 Number of travelers: {{{numberOfTravelers}}}
 Total trip duration is the sum of all days. Please number the days in the daily itinerary sequentially across the entire trip.
 For each day in the itinerary, you must specify the destination city.
+If arrival or departure times are provided for a destination, plan the first and last day's activities for that destination accordingly (e.g., lighter activities on arrival day, plan around departure time on the last day).
 
 Budget: {{{budget}}}
 Interests: {{{interests}}}
