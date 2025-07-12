@@ -14,9 +14,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, CalendarDays, DollarSign, Heart, Sparkles, Loader2, PlusCircle, Trash2, Users, Clock } from "lucide-react";
+import { MapPin, CalendarDays, DollarSign, Heart, Sparkles, Loader2, PlusCircle, Trash2, Users, Clock, Sun, Building } from "lucide-react";
 import type { ItineraryInput } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { Slider } from "@/components/ui/slider";
 
 const DestinationSchema = z.object({
   name: z.string().min(2, { message: "Destination must be at least 2 characters." }),
@@ -30,6 +30,7 @@ const TravelItineraryInputSchema = z.object({
   numberOfTravelers: z.coerce.number().min(1, { message: "Must be at least 1 traveler." }),
   budget: z.string().min(2, { message: "Please provide a budget (e.g., '$1000', 'moderate')." }),
   interests: z.string().optional(),
+  indoorOutdoorPreference: z.coerce.number().min(0).max(100).default(50),
 });
 
 interface TripFormProps {
@@ -45,6 +46,7 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
       numberOfTravelers: 2,
       budget: "Moderate",
       interests: "sightseeing, local food, history",
+      indoorOutdoorPreference: 50,
     },
   });
 
@@ -74,7 +76,7 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
                         name={`destinations.${index}.name`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="sm:hidden">Destination</FormLabel>
+                            <FormLabel>Destination</FormLabel>
                             <div className="relative">
                               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                               <FormControl>
@@ -90,7 +92,7 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
                         name={`destinations.${index}.durationDays`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="sm:hidden">Duration (days)</FormLabel>
+                            <FormLabel>Duration (days)</FormLabel>
                             <div className="relative">
                               <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                               <FormControl>
@@ -106,7 +108,7 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
                         name={`destinations.${index}.arrivalTime`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="sm:hidden">Arrival Time (Optional)</FormLabel>
+                            <FormLabel>Arrival Time</FormLabel>
                             <div className="relative">
                               <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                               <FormControl>
@@ -122,7 +124,7 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
                         name={`destinations.${index}.departureTime`}
                         render={({ field }) => (
                           <FormItem>
-                             <FormLabel className="sm:hidden">Departure Time (Optional)</FormLabel>
+                             <FormLabel>Departure Time</FormLabel>
                             <div className="relative">
                               <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                               <FormControl>
@@ -138,7 +140,7 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="mt-1 sm:mt-0 self-center text-muted-foreground hover:text-destructive"
+                      className="mt-1 sm:mt-6 text-muted-foreground hover:text-destructive"
                       onClick={() => remove(index)}
                       disabled={fields.length <= 1}
                       aria-label="Remove destination"
@@ -159,57 +161,84 @@ export function TripForm({ onSubmit, isLoading }: TripFormProps) {
                 Add Destination
               </Button>
             </div>
+            
+            <div className="grid md:grid-cols-2 gap-8 pt-4">
+              <div className="grid md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="numberOfTravelers"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Number of Travelers</FormLabel>
+                      <div className="relative">
+                        <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <FormControl>
+                          <Input type="number" placeholder="e.g., 2" {...field} className="pl-10" />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="budget"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Budget</FormLabel>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <FormControl>
+                          <Input placeholder="e.g., $2000, Luxury" {...field} className="pl-10" />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="interests"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Interests</FormLabel>
+                      <div className="relative">
+                        <Heart className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <FormControl>
+                          <Input placeholder="e.g., Art, History, Hiking" {...field} className="pl-10" />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-            <div className="grid md:grid-cols-3 gap-6 pt-4">
-               <FormField
-                control={form.control}
-                name="numberOfTravelers"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Number of Travelers</FormLabel>
-                    <div className="relative">
-                      <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                      <FormControl>
-                        <Input type="number" placeholder="e.g., 2" {...field} className="pl-10" />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
-                name="budget"
-                render={({ field }) => (
+                name="indoorOutdoorPreference"
+                render={({ field: { value, onChange } }) => (
                   <FormItem>
-                    <FormLabel>Budget</FormLabel>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                      <FormControl>
-                        <Input placeholder="e.g., $2000, Luxury" {...field} className="pl-10" />
-                      </FormControl>
+                    <FormLabel>Indoor vs. Outdoor Preference</FormLabel>
+                      <div className="pt-2">
+                        <FormControl>
+                          <Slider
+                            defaultValue={[value]}
+                            onValueChange={(vals) => onChange(vals[0])}
+                            max={100}
+                            step={10}
+                          />
+                        </FormControl>
+                      </div>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1"><Sun className="size-3.5"/>More Outdoor</div>
+                      <div className="flex items-center gap-1">More Indoor<Building className="size-3.5"/></div>
                     </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="interests"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Interests</FormLabel>
-                    <div className="relative">
-                      <Heart className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                      <FormControl>
-                        <Input placeholder="e.g., Art, History, Hiking" {...field} className="pl-10" />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+            
             <div className="flex justify-end">
               <Button type="submit" disabled={isLoading} size="lg" className="gap-2">
                 {isLoading ? (

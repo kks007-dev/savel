@@ -27,6 +27,7 @@ const TravelItineraryInputSchema = z.object({
   numberOfTravelers: z.number().describe('The number of people traveling.'),
   budget: z.string().describe("The budget for the entire trip (e.g., '$5000', 'luxury')."),
   interests: z.string().optional().describe('Interests (e.g., history, food, art).'),
+  indoorOutdoorPreference: z.number().min(0).max(100).default(50).describe('User preference for indoor vs outdoor activities. 0 is all outdoor, 100 is all indoor.'),
 });
 export type TravelItineraryInput = z.infer<typeof TravelItineraryInputSchema>;
 
@@ -104,10 +105,12 @@ If arrival or departure times are provided for a destination, plan the first and
 
 Budget: {{{budget}}}
 Interests: {{{interests}}}
+Indoor/Outdoor Preference: The user prefers a ratio of activities. A value of 0 means all outdoor, 100 means all indoor. The user's preference is {{{indoorOutdoorPreference}}}.
+When planning activities, balance this preference with must-see attractions, which are often outdoors. If the user's preference for indoor activities is not over 50%, you should prioritize including iconic outdoor landmarks and sights.
 
 Your tasks are:
 1.  **Hotel Suggestions**: Provide 3 hotel suggestions for each destination with cost indicators ($, $$, $$$), booking links, and the destination city.
-2.  **Daily Itinerary**: Create a detailed daily itinerary with activity suggestions, nearest metro stations, cost estimates, and external links for each day of the entire trip. For each day, provide transportation suggestions *between* activities, including a description and a Google Maps link. Do not add transportation for the last activity of a day.
+2.  **Daily Itinerary**: Create a detailed daily itinerary with activity suggestions that respect the indoor/outdoor preference. Include nearest metro stations, cost estimates, and external links for each day of the entire trip. For each day, provide transportation suggestions *between* activities, including a description and a Google Maps link. Do not add transportation for the last activity of a day.
 3.  **Inter-Destination Transport**: Provide a list of overall transportation suggestions for travel *between* the main destinations (e.g., flights from Paris to Rome).
 4.  **Cost-Effective Public Transport Analysis**: This is the most important part. For each destination city, provide a detailed analysis of the most cost-effective public transportation strategy.
     -   Based on the planned daily activities, determine if it's cheaper to buy single tickets or a multi-day pass (e.g., 24h, 48h, 72h pass).
